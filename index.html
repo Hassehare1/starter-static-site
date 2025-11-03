@@ -1,42 +1,40 @@
-<!doctype html>
-<html lang="sv">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Min första sida</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
+<script>
+  const out = document.getElementById("out");
+  document.getElementById("ping").addEventListener("click", async () => {
+    out.textContent = "Hämtar…";
 
-  <body>
-    <!-- 🧭 TOPPMENY -->
-    <nav class="topnav">
-      <a href="index.html">Hem</a>
-      <a href="about.html">Om</a>
-    </nav>
+    // 1) Försök Quotable (vanligast att funka)
+    try {
+      const r1 = await fetch("https://api.quotable.io/random?maxLength=120&ts=" + Date.now(), { cache: "no-store" });
+      if (!r1.ok) throw new Error("Quotable: " + r1.status);
+      const d1 = await r1.json();
+      out.textContent = `“${d1.content}” — ${d1.author}`;
+      return;
+    } catch (e) {
+      console.warn("Quotable fail:", e);
+    }
 
-    <!-- 💡 HUVUDINNEHÅLL -->
-    <main>
-      <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
-      <p>Den här sidan är deployad automatiskt via GitHub.</p>
-      <button id="ping">Klicka mig</button>
-      <pre id="out">...</pre>
-    </main>
+    // 2) Fallback: DummyJSON
+    try {
+      const r2 = await fetch("https://dummyjson.com/quotes/random?ts=" + Date.now(), { cache: "no-store" });
+      if (!r2.ok) throw new Error("DummyJSON: " + r2.status);
+      const d2 = await r2.json();
+      const q = d2.quote || (d2.quotes && d2.quotes[0]?.quote) || "Okänt citat";
+      const a = d2.author || (d2.quotes && d2.quotes[0]?.author) || "Okänd";
+      out.textContent = `“${q}” — ${a}`;
+      return;
+    } catch (e) {
+      console.warn("DummyJSON fail:", e);
+    }
 
-    <!-- ⚙️ SCRIPT -->
-    <script>
-      const out = document.getElementById("out");
-      document.getElementById("ping").addEventListener("click", async () => {
-        out.textContent = "Hämtar...";
-        try {
-          const r = await fetch("https://api.quotable.io/random");
-          if (!r.ok) throw new Error("API-svar: " + r.status);
-          const data = await r.json();
-          out.textContent = `“${data.content}” — ${data.author}`;
-        } catch (err) {
-          out.textContent = "Kunde inte hämta data.";
-          console.error(err);
-        }
-      });
-    </script>
-  </body>
-</html>
+    // 3) Lokal nödfallback (ingen nätverksåtkomst krävs)
+    const lokala = [
+      "All kod är provisorisk tills den fungerar.",
+      "Små steg är snabbast i längden.",
+      "Gör det enkelt först, optimera sen."
+    ];
+    const a = ["Du", "Okänd", "AI-kompisen"][Math.floor(Math.random()*3)];
+    const q = lokala[Math.floor(Math.random()*lokala.length)];
+    out.textContent = `“${q}” — ${a}`;
+  });
+</script>
