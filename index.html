@@ -1,39 +1,44 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="sv">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Min första sida</title>
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Min första sida</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
 
-  <body>
-    <!-- Enkel meny -->
-    <p><a href="index.html">Hem</a> <a href="about.html">Om</a></p>
+<body>
+  <!-- Toppmeny -->
+  <nav>
+    <a href="/index.html">Hem</a>
+    <a href="/about.html">Om</a>
+  </nav>
 
+  <main>
     <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
     <p>Den här sidan är deployad automatiskt via GitHub.</p>
 
     <button id="ping">Klicka mig</button>
-    <pre id="out">…</pre>
+    <pre id="out">...</pre>
+  </main>
 
-   <script>
-  async function getQuote() {
-    const out = document.getElementById("out");
-    out.textContent = "Hämtar…";
-    try {
-      const r = await fetch("/api/quote?ts=" + Date.now(), { cache: "no-store" });
-      if (!r.ok) throw new Error("API " + r.status);
-      const d = await r.json();
-      out.textContent = `“${d.content}” — ${d.author}`;
-    } catch (e) {
-      out.textContent = "Kunde inte hämta data.";
-      console.error(e);
+  <script>
+    async function getQuote() {
+      const out = document.getElementById("out");
+      out.textContent = "Hämtar...";
+      try {
+        const r = await fetch("/api/quote?ts=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) throw new Error("API-fel " + r.status);
+        const d = await r.json();
+        out.textContent = `“${d.content}” — ${d.author}`;
+      } catch (e) {
+        out.textContent = "Kunde inte hämta data.";
+        console.error(e);
+      }
     }
-  }
-  document.getElementById("ping").addEventListener("click", getQuote);
-  // Visa något direkt vid inladdning
-  getQuote();
-</script>
 
-  </body>
+    document.getElementById("ping").addEventListener("click", getQuote);
+    getQuote(); // Visa ett citat direkt vid inladdning
+  </script>
+</body>
 </html>
