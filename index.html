@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Min första sida</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>🎉 Live från GitHub → Vercel</h1>
+      <p>Den här sidan är deployad automatiskt via GitHub.</p>
+      <button id="ping">Klicka mig</button>
+      <pre id="out">...</pre>
+    </main>
+    <script>
+      document.getElementById('ping').addEventListener('click', () => {
+        document.getElementById('out').textContent = 'Allt funkar! 👌';
+      });
+    </script>
+  </body>
+</html>
