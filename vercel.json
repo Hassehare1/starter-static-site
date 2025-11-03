@@ -1,16 +1,7 @@
 {
   "version": 2,
-  "name": "starter-static-site",
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "src": "^/api/.*", "continue": true },   // låt /api passera
+    { "src": "/(.*)", "dest": "/$1" }          // övriga vanliga filer
   ]
 }
