@@ -30,25 +30,17 @@
     <!-- AKTIER -->
     <section>
       <h2>Liten aktie–ruta</h2>
-      <label for="ticker">Välj eller skriv en ticker:</label>
-      <select id="ticker">
-        <option value="NVDA.US">NVIDIA (NVDA.US)</option>
-        <option value="AAPL.US">Apple (AAPL.US)</option>
-        <option value="MSFT.US">Microsoft (MSFT.US)</option>
-        <option value="TSLA.US">Tesla (TSLA.US)</option>
-        <option value="RHM.DE">Rheinmetall (RHM.DE)</option>
-        <option value="NVO.CO">Novo Nordisk (NVO.CO)</option>
-        <option value="ADURO.CA">Aduro Clean Tech (ADURO.CA)</option>
-        <option value="BMW.DE">BMW (BMW.DE)</option>
-      </select>
+      <label for="ticker">Ticker (Stooq-format, t.ex. NVDA.US, AAPL.US, MSFT.US, TSLA.US, BMW.DE):</label>
+      <input id="ticker" value="NVDA.US" style="width:160px" />
       <button id="loadStock">Hämta kurs</button>
 
       <div id="stockBox" style="margin-top:1rem;">
         <div id="stockInfo">–</div>
-        <svg id="chart" width="360" height="140" style="background:#f7f7f7;border:1px solid #ddd"></svg>
+        <svg id="chart" width="500" height="220" style="background:#f7f7f7;border:1px solid #ddd"></svg>
+        <div id="stockChange" style="margin-top:0.3rem;font-weight:bold;"></div>
       </div>
-      <small>💡 Exempel: NVDA.US, AAPL.US, TSLA.US, RHM.DE, NVO.CO  
-      (källa: Stooq – dagliga, fördröjda kurser)</small>
+      <small>💡 Exempel: NVDA.US, AAPL.US, TSLA.US, RHM.DE, NVO.CO, ADUR.US  
+      Datakälla: Stooq (dagliga, fördröjda kurser).</small>
     </section>
   </main>
 
@@ -78,7 +70,9 @@
       const t = document.getElementById("ticker").value.trim() || "NVDA.US";
       const info = document.getElementById("stockInfo");
       const svg = document.getElementById("chart");
+      const changeBox = document.getElementById("stockChange");
       info.textContent = "Hämtar...";
+      changeBox.textContent = "";
       while (svg.firstChild) svg.removeChild(svg.firstChild);
 
       try {
@@ -89,20 +83,30 @@
 
         info.textContent = `${d.ticker}: ${d.lastClose.toFixed(2)} (senast ${d.lastDate})`;
 
+        // beräkna förändring i procent
+        const first = d.series[0].close;
+        const last = d.lastClose;
+        const changePct = ((last - first) / first) * 100;
+        const sign = changePct >= 0 ? "+" : "";
+        changeBox.textContent = `${sign}${changePct.toFixed(1)} % senaste ${d.series.length} dagar`;
+        changeBox.style.color = changePct >= 0 ? "green" : "red";
+
         // RITA GRAF
-        const W = 360, H = 140, P = 10;
+        const W = 500, H = 220, P = 15;
         const data = d.series;
         const xs = data.map((_, i) => P + i * ((W - 2 * P) / Math.max(1, data.length - 1)));
         const vals = data.map(pt => pt.close);
         const min = Math.min(...vals), max = Math.max(...vals);
         const scaleY = v => H - P - ((v - min) / (max - min || 1)) * (H - 2 * P);
 
+        // axel
         const ax = document.createElementNS("http://www.w3.org/2000/svg", "line");
         ax.setAttribute("x1", P); ax.setAttribute("y1", H - P);
         ax.setAttribute("x2", W - P); ax.setAttribute("y2", H - P);
         ax.setAttribute("stroke", "#ccc");
         svg.appendChild(ax);
 
+        // linje
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         let dAttr = "";
         data.forEach((pt, i) => {
@@ -113,20 +117,21 @@
         path.setAttribute("d", dAttr);
         path.setAttribute("fill", "none");
         path.setAttribute("stroke", "#0077ff");
-        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-width", "2.2");
         svg.appendChild(path);
 
+        // max/min etiketter
         const mkText = (txt, x, y) => {
           const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
           el.textContent = txt;
           el.setAttribute("x", x);
           el.setAttribute("y", y);
-          el.setAttribute("font-size", "10");
-          el.setAttribute("fill", "#444");
+          el.setAttribute("font-size", "11");
+          el.setAttribute("fill", "#333");
           svg.appendChild(el);
         };
-        mkText(max.toFixed(2), W - 60, scaleY(max) - 4);
-        mkText(min.toFixed(2), W - 60, scaleY(min) + 12);
+        mkText(max.toFixed(2), W - 65, scaleY(max) - 4);
+        mkText(min.toFixed(2), W - 65, scaleY(min) + 14);
 
       } catch (e) {
         info.textContent = "Kunde inte hämta kurs.";
