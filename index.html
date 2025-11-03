@@ -6,16 +6,36 @@
     <title>Min första sida</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
+
   <body>
+    <!-- 🧭 TOPPMENY -->
+    <nav class="topnav">
+      <a href="index.html">Hem</a>
+      <a href="about.html">Om</a>
+    </nav>
+
+    <!-- 💡 HUVUDINNEHÅLL -->
     <main>
       <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
       <p>Den här sidan är deployad automatiskt via GitHub.</p>
       <button id="ping">Klicka mig</button>
       <pre id="out">...</pre>
     </main>
+
+    <!-- ⚙️ SCRIPT -->
     <script>
-      document.getElementById('ping').addEventListener('click', () => {
-        document.getElementById('out').textContent = 'Allt funkar! 👌';
+      const out = document.getElementById("out");
+      document.getElementById("ping").addEventListener("click", async () => {
+        out.textContent = "Hämtar...";
+        try {
+          const r = await fetch("https://api.quotable.io/random");
+          if (!r.ok) throw new Error("API-svar: " + r.status);
+          const data = await r.json();
+          out.textContent = `“${data.content}” — ${data.author}`;
+        } catch (err) {
+          out.textContent = "Kunde inte hämta data.";
+          console.error(err);
+        }
       });
     </script>
   </body>
