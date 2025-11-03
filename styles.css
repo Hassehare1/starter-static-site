@@ -1,5 +1,26 @@
-body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;padding:2rem;background:#0b1020;color:#eef}
-main{max-width:800px;margin:0 auto}
-h1{font-size:clamp(24px,5vw,40px)}
-button{padding:.6rem 1rem;border:0;border-radius:.6rem;cursor:pointer}
-pre{background:#111827;padding:1rem;border-radius:.5rem}
+/* Bas */
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 2rem;
+  background: #0b1020;
+  color: #eef;
+}
+main { max-width: 900px; margin: 0 auto; }
+h1 { font-size: clamp(28px, 5vw, 48px); margin-bottom: .75rem; }
+p { color: #cfe3ff; }
+
+/* Knapp & output */
+button { padding: .6rem 1rem; border: 0; border-radius: .6rem; cursor: pointer; }
+pre { background: #111827; padding: 1rem; border-radius: .5rem; }
+
+/* Toppmeny */
+.topnav {
+  display: flex; gap: 1rem; align-items: center;
+  max-width: 900px; margin: 0 auto 1rem auto;
+}
+.topnav a {
+  color: #cfe3ff; text-decoration: none; padding: .4rem .6rem; border-radius: .4rem;
+}
+.topnav a:hover { background: #1f2940; }
+
