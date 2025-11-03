@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Min första sida</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
@@ -17,7 +18,7 @@
     <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
     <p>Den här sidan är deployad automatiskt via GitHub.</p>
 
-    <!-- Citat -->
+    <!-- CITAT -->
     <section>
       <h2>Citat</h2>
       <button id="ping">Klicka mig</button>
@@ -26,21 +27,28 @@
 
     <hr>
 
-    <!-- Aktier -->
+    <!-- AKTIER -->
     <section>
       <h2>Liten aktie–ruta</h2>
-      <label>
-        Ticker (Stooq-format, t.ex. NVDA, AAPL, MSFT, TSLA, BMW.DE):
-        <input id="ticker" value="NVDA" style="width:160px" />
-      </label>
+      <label for="ticker">Välj eller skriv en ticker:</label>
+      <select id="ticker">
+        <option value="NVDA.US">NVIDIA (NVDA.US)</option>
+        <option value="AAPL.US">Apple (AAPL.US)</option>
+        <option value="MSFT.US">Microsoft (MSFT.US)</option>
+        <option value="TSLA.US">Tesla (TSLA.US)</option>
+        <option value="RHM.DE">Rheinmetall (RHM.DE)</option>
+        <option value="NVO.CO">Novo Nordisk (NVO.CO)</option>
+        <option value="ADURO.CA">Aduro Clean Tech (ADURO.CA)</option>
+        <option value="BMW.DE">BMW (BMW.DE)</option>
+      </select>
       <button id="loadStock">Hämta kurs</button>
 
       <div id="stockBox" style="margin-top:1rem;">
         <div id="stockInfo">–</div>
-        <!-- Mini–graf (SVG) -->
         <svg id="chart" width="360" height="140" style="background:#f7f7f7;border:1px solid #ddd"></svg>
       </div>
-      <small>Datakälla: Stooq (dagliga, fördröjda kurser).</small>
+      <small>💡 Exempel: NVDA.US, AAPL.US, TSLA.US, RHM.DE, NVO.CO  
+      (källa: Stooq – dagliga, fördröjda kurser)</small>
     </section>
   </main>
 
@@ -62,16 +70,15 @@
     document.getElementById("ping").addEventListener("click", getQuote);
     getQuote();
 
-    // ---------- AKTIE ----------
+    // ---------- AKTIER ----------
     document.getElementById("loadStock").addEventListener("click", loadStock);
-    loadStock(); // hämta NVDA direkt
+    loadStock(); // hämta första direkt
 
     async function loadStock() {
-      const t = document.getElementById("ticker").value.trim() || "NVDA";
+      const t = document.getElementById("ticker").value.trim() || "NVDA.US";
       const info = document.getElementById("stockInfo");
       const svg = document.getElementById("chart");
       info.textContent = "Hämtar...";
-      // rensa svg
       while (svg.firstChild) svg.removeChild(svg.firstChild);
 
       try {
@@ -82,22 +89,20 @@
 
         info.textContent = `${d.ticker}: ${d.lastClose.toFixed(2)} (senast ${d.lastDate})`;
 
-        // Rita enkel linjegraf på SVG (360x140 med 10 px padding)
+        // RITA GRAF
         const W = 360, H = 140, P = 10;
         const data = d.series;
-        const xs = data.map((_, i) => P + i * ((W - 2*P) / Math.max(1, data.length - 1)));
+        const xs = data.map((_, i) => P + i * ((W - 2 * P) / Math.max(1, data.length - 1)));
         const vals = data.map(pt => pt.close);
         const min = Math.min(...vals), max = Math.max(...vals);
-        const scaleY = v => H - P - ( (v - min) / (max - min || 1) ) * (H - 2*P);
+        const scaleY = v => H - P - ((v - min) / (max - min || 1)) * (H - 2 * P);
 
-        // axes (svag)
         const ax = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        ax.setAttribute("x1", P); ax.setAttribute("y1", H-P);
-        ax.setAttribute("x2", W-P); ax.setAttribute("y2", H-P);
+        ax.setAttribute("x1", P); ax.setAttribute("y1", H - P);
+        ax.setAttribute("x2", W - P); ax.setAttribute("y2", H - P);
         ax.setAttribute("stroke", "#ccc");
         svg.appendChild(ax);
 
-        // line path
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         let dAttr = "";
         data.forEach((pt, i) => {
@@ -107,22 +112,21 @@
         });
         path.setAttribute("d", dAttr);
         path.setAttribute("fill", "none");
-        path.setAttribute("stroke", "#0a66ff");
+        path.setAttribute("stroke", "#0077ff");
         path.setAttribute("stroke-width", "2");
         svg.appendChild(path);
 
-        // min/max labels
         const mkText = (txt, x, y) => {
           const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
           el.textContent = txt;
           el.setAttribute("x", x);
           el.setAttribute("y", y);
           el.setAttribute("font-size", "10");
-          el.setAttribute("fill", "#555");
+          el.setAttribute("fill", "#444");
           svg.appendChild(el);
         };
-        mkText(max.toFixed(2), W - 50, scaleY(max) - 4);
-        mkText(min.toFixed(2), W - 50, scaleY(min) + 12);
+        mkText(max.toFixed(2), W - 60, scaleY(max) - 4);
+        mkText(min.toFixed(2), W - 60, scaleY(min) + 12);
 
       } catch (e) {
         info.textContent = "Kunde inte hämta kurs.";
