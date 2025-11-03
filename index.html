@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Min första sida</title>
-  <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
@@ -18,11 +17,35 @@
     <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
     <p>Den här sidan är deployad automatiskt via GitHub.</p>
 
-    <button id="ping">Klicka mig</button>
-    <pre id="out">...</pre>
+    <!-- Citat -->
+    <section>
+      <h2>Citat</h2>
+      <button id="ping">Klicka mig</button>
+      <pre id="out">...</pre>
+    </section>
+
+    <hr>
+
+    <!-- Aktier -->
+    <section>
+      <h2>Liten aktie–ruta</h2>
+      <label>
+        Ticker (Stooq-format, t.ex. NVDA, AAPL, MSFT, TSLA, BMW.DE):
+        <input id="ticker" value="NVDA" style="width:160px" />
+      </label>
+      <button id="loadStock">Hämta kurs</button>
+
+      <div id="stockBox" style="margin-top:1rem;">
+        <div id="stockInfo">–</div>
+        <!-- Mini–graf (SVG) -->
+        <svg id="chart" width="360" height="140" style="background:#f7f7f7;border:1px solid #ddd"></svg>
+      </div>
+      <small>Datakälla: Stooq (dagliga, fördröjda kurser).</small>
+    </section>
   </main>
 
   <script>
+    // ---------- CITAT ----------
     async function getQuote() {
       const out = document.getElementById("out");
       out.textContent = "Hämtar...";
@@ -36,9 +59,76 @@
         console.error(e);
       }
     }
-
     document.getElementById("ping").addEventListener("click", getQuote);
-    getQuote(); // Visa ett citat direkt vid inladdning
+    getQuote();
+
+    // ---------- AKTIE ----------
+    document.getElementById("loadStock").addEventListener("click", loadStock);
+    loadStock(); // hämta NVDA direkt
+
+    async function loadStock() {
+      const t = document.getElementById("ticker").value.trim() || "NVDA";
+      const info = document.getElementById("stockInfo");
+      const svg = document.getElementById("chart");
+      info.textContent = "Hämtar...";
+      // rensa svg
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      try {
+        const r = await fetch("/api/stock?ticker=" + encodeURIComponent(t) + "&ts=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) throw new Error("API " + r.status);
+        const d = await r.json();
+        if (d.error) throw new Error(d.detail || d.error);
+
+        info.textContent = `${d.ticker}: ${d.lastClose.toFixed(2)} (senast ${d.lastDate})`;
+
+        // Rita enkel linjegraf på SVG (360x140 med 10 px padding)
+        const W = 360, H = 140, P = 10;
+        const data = d.series;
+        const xs = data.map((_, i) => P + i * ((W - 2*P) / Math.max(1, data.length - 1)));
+        const vals = data.map(pt => pt.close);
+        const min = Math.min(...vals), max = Math.max(...vals);
+        const scaleY = v => H - P - ( (v - min) / (max - min || 1) ) * (H - 2*P);
+
+        // axes (svag)
+        const ax = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        ax.setAttribute("x1", P); ax.setAttribute("y1", H-P);
+        ax.setAttribute("x2", W-P); ax.setAttribute("y2", H-P);
+        ax.setAttribute("stroke", "#ccc");
+        svg.appendChild(ax);
+
+        // line path
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        let dAttr = "";
+        data.forEach((pt, i) => {
+          const x = xs[i];
+          const y = scaleY(pt.close);
+          dAttr += (i ? " L " : "M ") + x + " " + y;
+        });
+        path.setAttribute("d", dAttr);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#0a66ff");
+        path.setAttribute("stroke-width", "2");
+        svg.appendChild(path);
+
+        // min/max labels
+        const mkText = (txt, x, y) => {
+          const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          el.textContent = txt;
+          el.setAttribute("x", x);
+          el.setAttribute("y", y);
+          el.setAttribute("font-size", "10");
+          el.setAttribute("fill", "#555");
+          svg.appendChild(el);
+        };
+        mkText(max.toFixed(2), W - 50, scaleY(max) - 4);
+        mkText(min.toFixed(2), W - 50, scaleY(min) + 12);
+
+      } catch (e) {
+        info.textContent = "Kunde inte hämta kurs.";
+        console.error(e);
+      }
+    }
   </script>
 </body>
 </html>
