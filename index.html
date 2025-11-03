@@ -16,50 +16,24 @@
     <button id="ping">Klicka mig</button>
     <pre id="out">…</pre>
 
-    <script>
-      async function getQuote() {
-        const out = document.getElementById("out");
-        out.textContent = "Hämtar…";
+   <script>
+  async function getQuote() {
+    const out = document.getElementById("out");
+    out.textContent = "Hämtar…";
+    try {
+      const r = await fetch("/api/quote?ts=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) throw new Error("API " + r.status);
+      const d = await r.json();
+      out.textContent = `“${d.content}” — ${d.author}`;
+    } catch (e) {
+      out.textContent = "Kunde inte hämta data.";
+      console.error(e);
+    }
+  }
+  document.getElementById("ping").addEventListener("click", getQuote);
+  // Visa något direkt vid inladdning
+  getQuote();
+</script>
 
-        // 1) Försök Quotable
-        try {
-          const r1 = await fetch("https://api.quotable.io/random?maxLength=120&ts=" + Date.now(), { cache: "no-store" });
-          if (!r1.ok) throw new Error("Quotable: " + r1.status);
-          const d1 = await r1.json();
-          out.textContent = `“${d1.content}” — ${d1.author}`;
-          return;
-        } catch (e) {
-          console.warn("Quotable fail:", e);
-        }
-
-        // 2) Försök Type.fit (stort JSON med många citat)
-        try {
-          const r2 = await fetch("https://type.fit/api/quotes");
-          if (!r2.ok) throw new Error("Type.fit: " + r2.status);
-          const list = await r2.json();
-          const item = list[Math.floor(Math.random() * list.length)];
-          const q = item?.text || "Okänt citat";
-          const a = item?.author || "Okänd";
-          out.textContent = `“${q}” — ${a}`;
-          return;
-        } catch (e) {
-          console.warn("Type.fit fail:", e);
-        }
-
-        // 3) Lokal fallback
-        const lokala = [
-          "All kod är provisorisk tills den fungerar.",
-          "Små steg är snabbast i längden.",
-          "Gör det enkelt först, optimera sen."
-        ];
-        const a = ["Du", "Okänd", "AI-kompisen"][Math.floor(Math.random() * 3)];
-        const q = lokala[Math.floor(Math.random() * lokala.length)];
-        out.textContent = `“${q}” — ${a}`;
-      }
-
-      document.getElementById("ping").addEventListener("click", getQuote);
-      // Hämta direkt vid inladdning också:
-      getQuote();
-    </script>
   </body>
 </html>
