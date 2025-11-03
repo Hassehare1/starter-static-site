@@ -4,38 +4,62 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Min första sida</title>
-    <link rel="stylesheet" href="styles.css?v=5" />
   </head>
 
   <body>
-    <!-- Toppmeny -->
-    <nav class="topnav">
-      <a href="index.html">Hem</a>
-      <a href="about.html">Om</a>
-    </nav>
+    <!-- Enkel meny -->
+    <p><a href="index.html">Hem</a> <a href="about.html">Om</a></p>
 
-    <main>
-      <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
-      <p>Den här sidan är deployad automatiskt via GitHub.</p>
+    <h1>🚀 Min första uppdaterade sida via GitHub och Vercel!</h1>
+    <p>Den här sidan är deployad automatiskt via GitHub.</p>
 
-      <button id="ping">Klicka mig</button>
-      <pre id="out">...</pre>
-    </main>
+    <button id="ping">Klicka mig</button>
+    <pre id="out">…</pre>
 
     <script>
-      document.getElementById("ping").addEventListener("click", async () => {
+      async function getQuote() {
         const out = document.getElementById("out");
-        out.textContent = "Hämtar citat...";
+        out.textContent = "Hämtar…";
 
+        // 1) Försök Quotable
         try {
-          const res = await fetch("https://api.quotable.io/random?ts=" + Date.now(), { cache: "no-store" });
-          if (!res.ok) throw new Error("Fel vid hämtning");
-          const data = await res.json();
-          out.textContent = `“${data.content}” — ${data.author}`;
-        } catch (err) {
-          out.textContent = "Kunde inte hämta data. Försök igen senare.";
+          const r1 = await fetch("https://api.quotable.io/random?maxLength=120&ts=" + Date.now(), { cache: "no-store" });
+          if (!r1.ok) throw new Error("Quotable: " + r1.status);
+          const d1 = await r1.json();
+          out.textContent = `“${d1.content}” — ${d1.author}`;
+          return;
+        } catch (e) {
+          console.warn("Quotable fail:", e);
         }
-      });
+
+        // 2) Försök Type.fit (stort JSON med många citat)
+        try {
+          const r2 = await fetch("https://type.fit/api/quotes");
+          if (!r2.ok) throw new Error("Type.fit: " + r2.status);
+          const list = await r2.json();
+          const item = list[Math.floor(Math.random() * list.length)];
+          const q = item?.text || "Okänt citat";
+          const a = item?.author || "Okänd";
+          out.textContent = `“${q}” — ${a}`;
+          return;
+        } catch (e) {
+          console.warn("Type.fit fail:", e);
+        }
+
+        // 3) Lokal fallback
+        const lokala = [
+          "All kod är provisorisk tills den fungerar.",
+          "Små steg är snabbast i längden.",
+          "Gör det enkelt först, optimera sen."
+        ];
+        const a = ["Du", "Okänd", "AI-kompisen"][Math.floor(Math.random() * 3)];
+        const q = lokala[Math.floor(Math.random() * lokala.length)];
+        out.textContent = `“${q}” — ${a}`;
+      }
+
+      document.getElementById("ping").addEventListener("click", getQuote);
+      // Hämta direkt vid inladdning också:
+      getQuote();
     </script>
   </body>
 </html>
