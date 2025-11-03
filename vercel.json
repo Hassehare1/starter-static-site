@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "^/api/.*", "continue": true },   // låt /api passera
-    { "src": "/(.*)", "dest": "/$1" }          // övriga vanliga filer
-  ]
-}
