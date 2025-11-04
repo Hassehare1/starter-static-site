@@ -66,6 +66,26 @@
     document.getElementById("loadStock").addEventListener("click", loadStock);
     loadStock(); // hämta första direkt
 
+    // Hjälpare: beräkna SMA över array av tal
+    function calcSMA(values, window) {
+      const out = [];
+      if (values.length < 1) return out;
+      let sum = 0;
+      for (let i = 0; i < values.length; i++) {
+        sum += values[i];
+        if (i >= window) sum -= values[i - window];
+        if (i >= window - 1) {
+          out.push({ i, v: sum / window }); // i = index i ursprungsserien
+        }
+      }
+      return out; // [{i, v}, ...] börjar vid window-1
+    }
+
+    // Hjälpare: skapa SVG-path av punkter
+    function pathFromPoints(points) {
+      return points.map((p, i) => (i ? "L" : "M") + p.x + " " + p.y).join(" ");
+    }
+
     async function loadStock() {
       const t = document.getElementById("ticker").value.trim() || "NVDA.US";
       const info = document.getElementById("stockInfo");
@@ -83,7 +103,7 @@
 
         info.textContent = `${d.ticker}: ${d.lastClose.toFixed(2)} (senast ${d.lastDate})`;
 
-        // beräkna förändring i procent
+        // förändring i procent för hela visade fönstret
         const first = d.series[0].close;
         const last = d.lastClose;
         const changePct = ((last - first) / first) * 100;
@@ -91,11 +111,11 @@
         changeBox.textContent = `${sign}${changePct.toFixed(1)} % senaste ${d.series.length} dagar`;
         changeBox.style.color = changePct >= 0 ? "green" : "red";
 
-        // RITA GRAF
+        // --- RITA GRAF ---
         const W = 500, H = 220, P = 15;
-        const data = d.series;
-        const xs = data.map((_, i) => P + i * ((W - 2 * P) / Math.max(1, data.length - 1)));
+        const data = d.series;          // [{date, close}, ...] äldre → nyare
         const vals = data.map(pt => pt.close);
+        const xs = data.map((_, i) => P + i * ((W - 2 * P) / Math.max(1, data.length - 1)));
         const min = Math.min(...vals), max = Math.max(...vals);
         const scaleY = v => H - P - ((v - min) / (max - min || 1)) * (H - 2 * P);
 
@@ -106,32 +126,65 @@
         ax.setAttribute("stroke", "#ccc");
         svg.appendChild(ax);
 
-        // linje
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        let dAttr = "";
-        data.forEach((pt, i) => {
-          const x = xs[i];
-          const y = scaleY(pt.close);
-          dAttr += (i ? " L " : "M ") + x + " " + y;
-        });
-        path.setAttribute("d", dAttr);
-        path.setAttribute("fill", "none");
-        path.setAttribute("stroke", "#0077ff");
-        path.setAttribute("stroke-width", "2.2");
-        svg.appendChild(path);
+        // prislinje
+        const pricePts = data.map((pt, i) => ({ x: xs[i], y: scaleY(pt.close) }));
+        const pricePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pricePath.setAttribute("d", pathFromPoints(pricePts));
+        pricePath.setAttribute("fill", "none");
+        pricePath.setAttribute("stroke", "#0077ff");
+        pricePath.setAttribute("stroke-width", "2.2");
+        svg.appendChild(pricePath);
 
-        // max/min etiketter
-        const mkText = (txt, x, y) => {
+        // SMA 20 och 50
+        const sma20 = calcSMA(vals, 20);
+        const sma50 = calcSMA(vals, 50);
+
+        if (sma20.length) {
+          const pts20 = sma20.map(p => ({ x: xs[p.i], y: scaleY(p.v) }));
+          const path20 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path20.setAttribute("d", pathFromPoints(pts20));
+          path20.setAttribute("fill", "none");
+          path20.setAttribute("stroke", "#ff8c00"); // orange
+          path20.setAttribute("stroke-width", "1.6");
+          svg.appendChild(path20);
+        }
+
+        if (sma50.length) {
+          const pts50 = sma50.map(p => ({ x: xs[p.i], y: scaleY(p.v) }));
+          const path50 = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          path50.setAttribute("d", pathFromPoints(pts50));
+          path50.setAttribute("fill", "none");
+          path50.setAttribute("stroke", "#6a5acd"); // slateblue
+          path50.setAttribute("stroke-width", "1.6");
+          svg.appendChild(path50);
+        }
+
+        // min/max-etiketter
+        const mkText = (txt, x, y, color="#333") => {
           const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
           el.textContent = txt;
           el.setAttribute("x", x);
           el.setAttribute("y", y);
           el.setAttribute("font-size", "11");
-          el.setAttribute("fill", "#333");
+          el.setAttribute("fill", color);
           svg.appendChild(el);
         };
         mkText(max.toFixed(2), W - 65, scaleY(max) - 4);
         mkText(min.toFixed(2), W - 65, scaleY(min) + 14);
+
+        // legend
+        function legendLine(x, y, color, label) {
+          const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          l.setAttribute("x1", x); l.setAttribute("y1", y);
+          l.setAttribute("x2", x+20); l.setAttribute("y2", y);
+          l.setAttribute("stroke", color);
+          l.setAttribute("stroke-width", "2");
+          svg.appendChild(l);
+          mkText(label, x+26, y+4, "#333");
+        }
+        legendLine(P, P + 4, "#0077ff", "Pris");
+        legendLine(P + 80, P + 4, "#ff8c00", "SMA20");
+        legendLine(P + 170, P + 4, "#6a5acd", "SMA50");
 
       } catch (e) {
         info.textContent = "Kunde inte hämta kurs.";
